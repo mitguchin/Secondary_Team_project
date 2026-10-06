@@ -1,0 +1,86 @@
+# ============================================================
+#  최종 평가 질문 세트 — 02_generate_eval.ipynb 에서 순서대로 답변 → 마지막에 RAGAS 일괄 측정
+#
+#  필드
+#   id / set / category / qid(원 질문 번호) / conv(같은 값이면 한 대화: 이전 턴 기억)
+#   question        : 입력 그대로 — 규칙·사전 전처리 없이 이 문장 그대로 검색·LLM 에 전달 (오타·한영·한자·영어 혼용 포함)
+#   expect_orgs / expect_mode : 기관 라우팅 기대값                  → Route OK
+#   must_include    : 답변에 꼭 있어야 할 핵심 사실 ('A|B' = 둘 중 하나) → Key Fact
+#   reference       : 정답 (있으면 RAGAS context_recall·factual_correctness·context_precision(ref) 계산,
+#                     없으면 참조 없는 지표만: faithfulness·answer_relevancy·context_precision(no-ref))
+#
+#  ⚠️ 연말정산 세트는 근거 문서(국세청 「연말정산 신고안내」 등)를 ZIP 에 넣어야 '문서 기반' 정답이 나옵니다.
+#     RFP 코퍼스만 있으면 '제공된 문서에서 확인할 수 없습니다'가 정상 동작입니다.
+#     reference 는 2025년 귀속(2026년 초 연말정산) 기준. 2026 세법개정안(월세 한도 1,200만원 등)은 국회 통과 후 반영.
+# ============================================================
+- {id: T01, set: 연말정산, category: 오타, qid: Q05, question: "월세액 세액공재 한도가 얼마에요?",
+   must_include: ["1,000만"],
+   reference: "월세액 세액공제 대상 월세액 한도는 연 1,000만원입니다(2024년 귀속부터 750만원에서 1,000만원으로 상향)."}
+- {id: T02, set: 연말정산, category: 오타, qid: Q26, question: "연말졍산은 언제 하나여?",
+   must_include: ["2월"],
+   reference: "근로소득 연말정산은 다음 해 2월분 급여를 지급할 때(통상 2월 말까지) 회사(원천징수의무자)가 실시합니다. 간소화 자료는 1월 15일경부터 홈택스에서 조회할 수 있습니다."}
+- {id: T03, set: 연말정산, category: 오타, qid: Q08, question: "장기주택저당 차임금 이자 공제한도",
+   must_include: ["2,000만", "1,800만", "800만", "600만"],
+   reference: "장기주택저당차입금 이자상환액 소득공제 한도는 상환기간 15년 이상이면서 고정금리·비거치식 분할상환이면 2,000만원, 고정금리 또는 비거치식이면 1,800만원, 그 밖의 대출은 800만원, 상환기간 10년 이상 고정금리 또는 비거치식이면 600만원입니다."}
+- {id: T04, set: 연말정산, category: 띄어쓰기, qid: Q18, question: "기부금이월공제기간몇년",
+   must_include: ["10년"],
+   reference: "한도 초과로 공제받지 못한 기부금은 다음 과세기간부터 10년 이내에 이월하여 공제받을 수 있습니다."}
+- {id: T05, set: 연말정산, category: 줄임말, qid: Q27, question: "중퇴자 연정 언제함?",
+   must_include: ["퇴직", "5월"],
+   reference: "중도퇴직자는 퇴직하는 달의 급여를 지급할 때 회사가 연말정산을 합니다. 퇴직 정산 때 반영하지 못한 공제는 다음 해 5월 종합소득세 확정신고로 추가 공제받을 수 있습니다."}
+- {id: T06, set: 연말정산, category: 줄임말, qid: Q06, question: "월세공제 몇 퍼임?",
+   must_include: ["17%", "15%"],
+   reference: "월세액 세액공제율은 총급여 5,500만원 이하(종합소득금액 4,500만원 이하)는 17%, 총급여 5,500만원 초과 8,000만원 이하는 15%입니다."}
+- {id: T07, set: 연말정산, category: 한영자판, qid: Q05, question: "dnjftp rhdwp 한도 알려줘",
+   must_include: ["1,000만"],
+   reference: "월세액 세액공제 대상 월세액 한도는 연 1,000만원입니다."}
+- {id: T08, set: 연말정산, category: 한영자판, qid: Q26, question: "dusakfwjdtks 언제 해요?",
+   must_include: ["2월"],
+   reference: "근로소득 연말정산은 다음 해 2월분 급여를 지급할 때(통상 2월 말까지) 회사가 실시합니다."}
+- {id: T09, set: 연말정산, category: 영문혼용, qid: Q06, question: "Monthly rent 세액공제 rate가 몇 %?",
+   must_include: ["17%", "15%"],
+   reference: "월세액 세액공제율은 총급여 5,500만원 이하 17%, 5,500만원 초과 8,000만원 이하 15%입니다."}
+- {id: T10, set: 연말정산, category: 영문혼용, qid: Q04, question: "외국인 flat tax 19% 고르면 deduction 못 받아요?",
+   must_include: ["19%", "비과세|공제"],
+   reference: "외국인근로자가 19% 단일세율을 선택하면 비과세·소득공제·세액공제 및 감면을 적용받을 수 없습니다. 단일세율은 국내에서 최초로 근로를 제공한 날부터 20년 이내에 받는 근로소득에 적용됩니다."}
+- {id: T11, set: 연말정산, category: 영어, qid: Q28, question: "When is the deadline for the earned income payment statement?",
+   must_include: ["March 10|3월 10일"],
+   reference: "The payment statement for earned income must be submitted by March 10 of the following year."}
+- {id: T12, set: 연말정산, category: 한자, qid: Q05, question: "月貰 稅額控除 限度는?",
+   must_include: ["1,000만"],
+   reference: "월세액 세액공제 대상 월세액 한도는 연 1,000만원입니다."}
+- {id: T13, set: 연말정산, category: 한자, qid: Q18, question: "寄附金 移越控除 期間은 몇 年?",
+   must_include: ["10년"],
+   reference: "기부금 이월공제 기간은 10년입니다."}
+- {id: T14, set: 연말정산, category: 전제오류, qid: Q06, question: "월세 세액공제율이 30%로 올랐다면서요?",
+   note: "15%/17%로 바로잡기", must_include: ["15%", "17%"],
+   reference: "30%로 오른 사실은 없습니다. 월세액 세액공제율은 총급여 5,500만원 이하 17%, 5,500만원 초과 8,000만원 이하 15%입니다."}
+- {id: T15, set: 연말정산, category: 전제오류, qid: Q28, question: "지급명세서는 5월 31일까지 내면 되죠?",
+   must_include: ["3월 10일"],
+   reference: "아닙니다. 근로소득 지급명세서 제출기한은 다음 해 3월 10일입니다. 5월 31일은 종합소득세 확정신고 기한입니다."}
+
+
+# ---------------- RFP 멀티턴 (conv 가 같으면 이전 대화를 기억) ----------------
+- {id: C1-1, set: RFP, conv: C1, category: 요구사항정리,
+   question: "국민연금공단이 발주한 이러닝시스템 관련 사업 요구사항을 정리해 줘.", expect_orgs: [국민연금공단], expect_mode: single}
+- {id: C1-2, set: RFP, conv: C1, category: 후속질문,
+   question: "콘텐츠 개발 관리 요구 사항에 대해서 더 자세히 알려 줘.", expect_mode: inherit}
+- {id: C1-3, set: RFP, conv: C1, category: 타기관탐색,
+   question: "교육이나 학습 관련해서 다른 기관이 발주한 사업은 없나?", expect_mode: exclude}
+- {id: C2-1, set: RFP, conv: C2, category: 존재확인,
+   question: "기초과학연구원 극저온시스템 사업 요구에서 AI 기반 예측에 대한 요구사항이 있나?",
+   expect_orgs: [기초과학연구원], expect_mode: single, must_include: ["없"],
+   reference: "과업지시서에는 AI 기반 예측에 대한 요구사항이 없습니다. 과업은 중이온가속기용 극저온시스템 운전 업무(모니터링·제어·주요 수치 기록 및 분석·운전 경험 문서화)입니다."}
+- {id: C2-2, set: RFP, conv: C2, category: 후속질문,
+   question: "그럼 모니터링 업무에 대한 요청사항이 있는지 찾아보고 알려 줘.", expect_mode: inherit, must_include: ["24시간"],
+   reference: "가동기간에는 24시간 운전으로 극저온시스템 모니터링, 주요 수치 기록 및 분석, 제어를 수행하고, 휴지기간에는 유지보수 등을 위한 극저온시스템 모니터링·제어·주요 수치 기록 및 분석을 수행해야 합니다."}
+- {id: C3-1, set: RFP, conv: C3, category: 사업목적,
+   question: "한국 원자력 연구원에서 선량 평가 시스템 고도화 사업을 발주했는데, 이 사업이 왜 추진되는지 목적을 알려 줘.",
+   expect_orgs: [한국원자력연구원], expect_mode: single}
+- {id: C4-1, set: RFP, conv: C4, category: 비교,
+   question: "고려대학교 차세대 포털 시스템 사업이랑 광주과학기술원의 학사 시스템 기능개선 사업을 비교해 줄래?",
+   expect_orgs: [고려대학교, 광주과학기술원], expect_mode: compare}
+- {id: C4-2, set: RFP, conv: C4, category: 비교·정확성,
+   question: "고려대학교랑 광주과학기술원 각각 응답 시간에 대한 요구사항이 있나? 문서를 기반으로 정확하게 답변해 줘.",
+   expect_orgs: [고려대학교, 광주과학기술원], expect_mode: compare, must_include: ["3초"],
+   reference: "고려대학교: PER-002 온라인성 업무응답시간은 모든 질의를 요청 시점부터 3초 내 처리, PER-003 웹페이지 디스플레이시간 3초 내, PER-004 오류응답시간은 입력 후 3초 이내 오류 메시지 제시를 요구합니다. (광주과학기술원 부분은 해당 문서 확인 후 보완)"}

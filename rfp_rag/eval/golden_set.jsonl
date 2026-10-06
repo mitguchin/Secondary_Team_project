@@ -1,0 +1,15 @@
+{"id": "Q01", "question": "월세액 세액공재 한도가 얼마에요?", "reference": "월세액 세액공제 대상 월세액 한도는 연 1,000만원입니다(2024년 귀속부터 750만원에서 1,000만원으로 상향).", "key_facts": ["1,000만"], "key_facts_source": "직접 입력"}
+{"id": "Q02", "question": "연말졍산은 언제 하나여?", "reference": "근로소득 연말정산은 다음 해 2월분 급여를 지급할 때(통상 2월 말까지) 회사(원천징수의무자)가 실시합니다. 간소화 자료는 1월 15일경부터 홈택스에서 조회할 수 있습니다.", "key_facts": ["2월"], "key_facts_source": "직접 입력"}
+{"id": "Q03", "question": "장기주택저당 차임금 이자 공제한도", "reference": "장기주택저당차입금 이자상환액 소득공제 한도는 상환기간 15년 이상이면서 고정금리·비거치식 분할상환이면 2,000만원, 고정금리 또는 비거치식이면 1,800만원, 그 밖의 대출은 800만원, 상환기간 10년 이상 고정금리 또는 비거치식이면 600만원입니다.", "key_facts": ["2,000만", "1,800만", "800만", "600만"], "key_facts_source": "직접 입력"}
+{"id": "Q04", "question": "기부금이월공제기간몇년", "reference": "한도 초과로 공제받지 못한 기부금은 다음 과세기간부터 10년 이내에 이월하여 공제받을 수 있습니다.", "key_facts": ["10년"], "key_facts_source": "직접 입력"}
+{"id": "Q05", "question": "중퇴자 연정 언제함?", "reference": "중도퇴직자는 퇴직하는 달의 급여를 지급할 때 회사가 연말정산을 합니다. 퇴직 정산 때 반영하지 못한 공제는 다음 해 5월 종합소득세 확정신고로 추가 공제받을 수 있습니다.", "key_facts": ["퇴직", "5월"], "key_facts_source": "직접 입력"}
+{"id": "Q06", "question": "월세공제 몇 퍼임?", "reference": "월세액 세액공제율은 총급여 5,500만원 이하(종합소득금액 4,500만원 이하)는 17%, 총급여 5,500만원 초과 8,000만원 이하는 15%입니다.", "key_facts": ["17%", "15%"], "key_facts_source": "직접 입력"}
+{"id": "Q07", "question": "dnjftp rhdwp 한도 알려줘", "reference": "월세액 세액공제 대상 월세액 한도는 연 1,000만원입니다.", "key_facts": ["1,000만"], "key_facts_source": "직접 입력"}
+{"id": "Q08", "question": "dusakfwjdtks 언제 해요?", "reference": "근로소득 연말정산은 다음 해 2월분 급여를 지급할 때(통상 2월 말까지) 회사가 실시합니다.", "key_facts": ["2월"], "key_facts_source": "직접 입력"}
+{"id": "Q09", "question": "Monthly rent 세액공제 rate가 몇 %?", "reference": "월세액 세액공제율은 총급여 5,500만원 이하 17%, 5,500만원 초과 8,000만원 이하 15%입니다.", "key_facts": ["17%", "15%"], "key_facts_source": "직접 입력"}
+{"id": "Q10", "question": "외국인 flat tax 19% 고르면 deduction 못 받아요?", "reference": "외국인근로자가 19% 단일세율을 선택하면 비과세·소득공제·세액공제 및 감면을 적용받을 수 없습니다. 단일세율은 국내에서 최초로 근로를 제공한 날부터 20년 이내에 받는 근로소득에 적용됩니다.", "key_facts": ["19%", "비과세|공제"], "key_facts_source": "직접 입력"}
+{"id": "Q11", "question": "When is the deadline for the earned income payment statement?", "reference": "The payment statement for earned income must be submitted by March 10 of the following year.", "key_facts": ["March 10|3월 10일"], "key_facts_source": "직접 입력"}
+{"id": "Q12", "question": "月貰 稅額控除 限度는?", "reference": "월세액 세액공제 대상 월세액 한도는 연 1,000만원입니다.", "key_facts": ["1,000만"], "key_facts_source": "직접 입력"}
+{"id": "Q13", "question": "寄附金 移越控除 期間은 몇 年?", "reference": "기부금 이월공제 기간은 10년입니다.", "key_facts": ["10년"], "key_facts_source": "직접 입력"}
+{"id": "Q14", "question": "월세 세액공제율이 30%로 올랐다면서요?", "reference": "30%로 오른 사실은 없습니다. 월세액 세액공제율은 총급여 5,500만원 이하 17%, 5,500만원 초과 8,000만원 이하 15%입니다.", "key_facts": ["15%", "17%"], "key_facts_source": "직접 입력"}
+{"id": "Q15", "question": "지급명세서는 5월 31일까지 내면 되죠?", "reference": "아닙니다. 근로소득 지급명세서 제출기한은 다음 해 3월 10일입니다. 5월 31일은 종합소득세 확정신고 기한입니다.", "key_facts": ["3월 10일"], "key_facts_source": "직접 입력"}

@@ -1,0 +1,156 @@
+# ============================================================
+#  RFP Naive RAG 설정 — 노트북(01_rag_build / 02_generate_eval)·UI·CLI 에서 덮어쓸 수 있습니다
+#  노트북은 rag/hw.py 의 하드웨어 프로필로 L4(24GB)·RAM16GB·vCPU4 에 맞게 자동 조정합니다
+#  CLI 예: python main.py split --set split.seed=7 --set split.ratio=[0.8,0.1,0.1]
+# ============================================================
+paths:
+  input: data/rfp.zip          # ZIP 파일 또는 폴더 (PDF / HWP)
+  work_dir: artifacts           # 모든 체크포인트·인덱스·리포트 저장 위치
+
+parsing:
+  skip_first_pages: 2           # 각 문서 앞 N페이지(표지·목차)는 임베딩 제외
+  remove_repeated_lines: true   # PDF 반복 머리글/바닥글 제거 (페이지의 50% 이상에 반복되는 줄)
+  # ── 로더 (모두 라이브러리) ──
+  pdf_text_loader: PyPDFLoader  # PyPDFLoader | PyMuPDFLoader   (PDF 본문)
+  pdf_table_loader: PyMuPDFLoader  # PyMuPDFLoader(extract_tables="markdown") | null(표 추출 안 함)
+  image_parser: null            # null | hf-vlm(Qwen2.5-VL, 로컬 GPU) | rapidocr | tesseract | llm  (LangChain images_parser)
+  hwp_loader: HwpHwpxLoader     # HWP/HWPX: langchain-hwp-hwpx-loader (pip install langchain-hwp-hwpx-loader)
+  hwp:                          # HwpHwpxLoader 옵션 (표는 본문 제자리에 Markdown 으로 들어옴)
+    table_style: MARKDOWN       # MARKDOWN | CSV | INLINE
+    include_notes: true         # 각주·미주 → 본문 끝 '## Notes'
+    include_memos: false
+    include_hyperlinks: false
+  hwp_front_matter: auto        # HWP 는 쪽 정보가 없어 표지·목차를 자동 감지해 제외 | none
+  extract_tables: true
+  pypdf:                        # LangChain PyPDFLoader 옵션
+    mode: page                  # page(페이지별 Document) | single
+    extraction_mode: plain      # plain(콘텐츠 순서) | layout(좌표 배치 보존: 다단·표 많은 문서)
+    extraction_kwargs: {}
+  table_settings: {}            # PyMuPDFLoader extract_tables_settings (예: {strategy: lines_strict})
+  # ── PDF 파싱 정확도 향상 ──
+  remove_page_numbers: true     # '- 3 -', '3/19', '페이지 : 3/19' 줄 제거
+  repeated_line_ratio: 0.5      # 이 비율 이상 페이지에 반복되는 줄 = 머리글/바닥글
+  drop_table_text_from_body: true  # 본문에 평문으로 섞인 표 내용 제거(표는 Markdown 청크로 보존)
+  table_dedupe_threshold: 0.85  # 줄의 토큰 중 표 셀 토큰 비율이 이 이상이면 표 줄로 판단
+  join_broken_lines: true       # PDF 줄바꿈으로 끊긴 문장 이어붙이기
+  join_min_line_len: 20         # 이보다 짧은 줄(제목 등)은 잇지 않음
+  fix_bullet_glyphs: true       # 폰트 깨진 글머리(Ÿ 등) → •
+  hanja_mode: append            # none | append(必(필)) | replace(필)
+  caption_images: false         # (구버전 호환) true = image_parser: hf-vlm
+  vlm_model: Qwen/Qwen2.5-VL-3B-Instruct
+  vlm_max_new_tokens: 384
+  vlm_max_pixels: 802816        # 1024*28*28 — 이미지당 비전 토큰 상한(L4·RAM16GB 기준)
+  min_image_px: 180             # 가로/세로 모두 이보다 작은 이미지는 로고로 보고 무시
+  max_repeat_image_pages: 3     # 3페이지 이상 반복 등장하는 이미지 = 로고/장식 → 무시
+
+chunking:
+  chunk_size: 700               # 글자 단위 (후보 400 / 700 / 1000 — 노트북 1-3 셀에서 비교)
+  overlap_ratio: 0.2            # chunk_overlap = chunk_size × overlap_ratio
+  chunk_overlap: null           # 숫자를 넣으면 overlap_ratio 대신 사용
+  separators: ["문단", "Ⅰ.", "1.", "가.", "1)", "○", "□", "-", "※", "줄바꿈", "문장", "공백"]   # 앞일수록 우선 분할
+  section_headers: true         # 청크 머리말에 '섹션: 1. 사업개요 > 1.1 …' 경로 부착
+  prepend_title: true           # "문서: <파일명> | p.N" 머리말
+  table_size_factor: 2.0        # 표 청크는 chunk_size × 이 배수까지 허용(행 단위 분할, 헤더 반복)
+  min_chunk_chars: 30
+
+embedding:
+  model: nlpai-lab/KURE-v1      # 한국어 검색 특화(bge-m3 기반). 대안: BAAI/bge-m3, dragonkue/BGE-m3-ko
+  device: auto                  # auto | cuda | cpu | mps
+  batch_size: 32                # OOM 발생 시 자동으로 절반씩 줄이며 재시도
+  max_seq_length: 512
+  fp16: true                    # CUDA 에서만 적용
+  normalize: true
+  query_prefix: ""              # e5 계열이면 "query: "
+  doc_prefix: ""                # e5 계열이면 "passage: "
+  shard_every_batches: 20       # N배치마다 임베딩 샤드를 디스크에 저장(=체크포인트)
+
+faiss:                          # LangChain FAISS 벡터스토어
+  index_type: flat              # flat(정확, 수만 청크까지) | hnsw(근사, 대규모)
+  metric: ip                    # ip(정규화 벡터=코사인) | l2
+  hnsw_m: 32
+  hnsw_ef_construction: 200
+  hnsw_ef_search: 128           # 검색 시 적용(재구축 불필요)
+
+bm25:
+  tokenizer: kiwi               # kiwi(형태소) | hf(임베딩 모델 토크나이저) | whitespace
+  k1: 1.5
+  b: 0.75
+
+retrieval:
+  top_k: 5
+  dense_weight: 0.6             # Dense 비율 (BM25 비율 = 1 - dense_weight)
+  fusion: score                 # score(min-max 가중합) | rrf(가중 Reciprocal Rank Fusion)
+  candidate_k: 50               # 각 검색기에서 뽑는 후보 수
+  rrf_k: 60
+
+rules:                          # (선택·기본 꺼짐) LLM 호출 전 규칙/사전 전처리 — 노트북은 순수 질문 그대로 사용
+  enabled: false                # true 로 켜면 아래 규칙과 사전(eval/domain_dict.yaml)을 적용 (CLI 실험용)
+  dict_path: eval/domain_dict.yaml
+  block: {enabled: true, min_chars: 2, min_valid_ratio: 0.4, max_jamo_ratio: 0.5}
+  guide_message: "제안요청서(RFP)·연말정산 관련 질문을 입력해 주세요. 예) '고려대학교 포털 사업의 응답시간 요구사항은?'"
+  keyboard: {enabled: true, min_syllables: 2}   # 한영 자판 변환 (dnjftp → 월세)
+  hanja: {enabled: true}                        # 月貰 → 월세
+  dictionary: {enabled: true}                   # 도메인 용어·오타·영문 용어 사전
+
+routing:                        # 질문 속 발주기관 → 해당 문서로 검색 범위 한정
+  enabled: true
+  auto_extract_orgs: true       # 파일명·표지에서 기관명 자동 추출 (사전 없음)
+  orgs: {}                      # (선택) 기관 별칭 {표준명: [별칭, …]} — 비우면 자동 추출만
+  followup_query: none          # none | concat(후속 질문에 직전 질문을 붙여 검색)
+
+llm:
+  model: gpt-5-mini
+  domain: "공공기관 제안요청서(RFP)"
+  allow_general: false          # true 면 문서에 없을 때 '[문서 외 일반지식]' 표시 후 답변 허용
+  history_turns: 3              # 멀티턴: 직전 N턴 대화를 프롬프트에 포함
+  temperature: 0.2              # gpt-5-mini 는 API 가 1 이외 값을 거부 → 자동 제외 후 경고 표시
+  top_p: 1.0                    # 동일
+  max_tokens: 2048              # max_completion_tokens (reasoning 토큰 포함!)
+  reasoning_effort: low         # minimal | low | medium | high (gpt-5 계열 전용)
+  timeout: 120
+
+qa_generation:
+  external_path: ""             # 직접 만든 평가셋(csv/jsonl: question, ground_truth, evidence_keywords[, doc_id])
+  n_per_doc: 15                 # 문서당 생성할 QA 수 (gpt-5-mini)
+  min_chunk_chars: 250
+  max_workers: 4
+  seed: 42
+  reasoning_effort: low
+  max_tokens: 3000
+
+split:
+  ratio: [0.7, 0.15, 0.15]      # train / valid / test (2개면 train/test)
+  seed: 42
+  stratify: doc_id              # none | doc_id | doc_type | question_type | chunk_kind
+  evidence_keywords:
+    enabled: true
+    min_keywords: 2             # 근거 키워드가 이 개수 미만인 샘플 제외
+    max_keywords: 8             # 샘플당 키워드 최대 개수
+    require_in_context: true    # 근거 청크에 실제로 등장하는 키워드만 인정
+    must_include: []            # 예: ["사업기간", "예산"] — 이 키워드가 있는 샘플만 사용
+    match: any                  # any | all (must_include 적용 방식)
+    exclude: []                 # 이 키워드가 있는 샘플 제외
+
+finetune:                       # (선택) 임베딩 모델 파인튜닝 — HF Trainer 체크포인트로 재개
+  enabled: false
+  epochs: 2
+  batch_size: 32
+  mini_batch_size: 8            # CachedMNRL: 큰 배치 효과를 작은 GPU 메모리로
+  learning_rate: 2.0e-5
+  warmup_ratio: 0.1
+  save_steps: 50
+  eval_steps: 50
+  save_total_limit: 3
+  auto_find_batch_size: true    # OOM 시 배치 자동 절반
+  dataloader_num_workers: 0     # 노트북 hw 프로필이 vCPU 에 맞게 설정 (4 vCPU → 2)
+  gradient_checkpointing: false # VRAM 12GB 미만일 때만 켜기
+  seed: 42
+
+evaluation:
+  eval_set: eval/eval_questions.yaml
+  split: test
+  max_samples: 30
+  metrics: [faithfulness, answer_relevancy, context_precision, context_recall, factual_correctness]
+  judge_model: gpt-5-mini
+  judge_reasoning_effort: low
+  judge_max_tokens: 4096
